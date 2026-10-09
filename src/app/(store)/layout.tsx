@@ -4,9 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { db } from "@/server/db/client";
 import { listActiveCategories } from "@/server/modules/catalog/queries";
-import { getCurrentCartCount } from "@/server/modules/cart/current";
-
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 let cachedSettings: {
   data: { supportEmail: string | null; supportWhatsapp: string | null } | null;
@@ -26,17 +24,14 @@ async function getStoreSettingsContact() {
 }
 
 export default async function StoreLayout({ children }: { children: ReactNode }) {
-  let cartCount = 0;
   let categories: Awaited<ReturnType<typeof listActiveCategories>> = [];
   let settings: { supportEmail: string | null; supportWhatsapp: string | null } | null = null;
 
   try {
-    const [cCount, cats, st] = await Promise.all([
-      getCurrentCartCount().catch(() => 0),
+    const [cats, st] = await Promise.all([
       listActiveCategories(db).catch(() => []),
       getStoreSettingsContact(),
     ]);
-    cartCount = cCount;
     categories = cats;
     settings = st;
   } catch (err) {
@@ -47,12 +42,12 @@ export default async function StoreLayout({ children }: { children: ReactNode })
 
   return (
     <>
-      <Header cartCount={cartCount} categories={topCategories} />
+      <Header cartCount={0} categories={topCategories} />
       <main id="konten" className="pb-20 md:pb-0">
         {children}
       </main>
       <Footer supportEmail={settings?.supportEmail ?? null} supportWhatsapp={settings?.supportWhatsapp ?? null} />
-      <MobileBottomNav cartCount={cartCount} />
+      <MobileBottomNav cartCount={0} />
     </>
   );
 }

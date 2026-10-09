@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
@@ -16,6 +17,32 @@ const items = [
 /** Navigasi bawah mobile (DESIGN.md §7.2): ikon + label, target ≥ 44px. */
 export function MobileBottomNav({ cartCount }: { cartCount: number }) {
   const pathname = usePathname() ?? "/";
+  const [count, setCount] = useState(cartCount);
+
+  useEffect(() => {
+    fetch("/api/cart/count")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && typeof d.count === "number") setCount(d.count);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    function onCartChange(e: Event) {
+      const customEvent = e as CustomEvent<{ delta?: number; count?: number }>;
+      if (typeof customEvent.detail?.count === "number") {
+        setCount(customEvent.detail.count);
+      } else if (typeof customEvent.detail?.delta === "number") {
+        setCount((prev) => Math.max(0, prev + customEvent.detail.delta!));
+      } else {
+        setCount((prev) => prev + 1);
+      }
+    }
+    window.addEventListener("cart:changed", onCartChange);
+    return () => window.removeEventListener("cart:changed", onCartChange);
+  }, []);
+
   return (
     <nav
       aria-label="Navigasi utama"
@@ -37,15 +64,15 @@ export function MobileBottomNav({ cartCount }: { cartCount: number }) {
               >
                 <Icon className="size-6" />
                 <span>{label}</span>
-                {href === "/keranjang" && cartCount > 0 ? (
-                  <span className="sr-only">, {cartCount} barang</span>
+                {href === "/keranjang" && count > 0 ? (
+                  <span className="sr-only">, {count} barang</span>
                 ) : null}
-                {href === "/keranjang" && cartCount > 0 ? (
+                {href === "/keranjang" && count > 0 ? (
                   <span
                     aria-hidden="true"
-                    className="absolute top-1.5 left-1/2 ml-2 min-w-5 rounded-pill bg-accent px-1 text-center text-caption font-bold text-ink-inverse"
+                    className="absolute top-1.5 left-1/2 ml-2 min-w-5 rounded-pill bg-accent px-1 text-center text-caption font-bold text-ink-inverse animate-in zoom-in-75 duration-150"
                   >
-                    {cartCount > 99 ? "99+" : cartCount}
+                    {count > 99 ? "99+" : count}
                   </span>
                 ) : null}
               </Link>

@@ -8,8 +8,13 @@ export function CartBadge({ initialCount }: { initialCount: number }) {
   const [count, setCount] = useState(initialCount);
 
   useEffect(() => {
-    setCount(initialCount);
-  }, [initialCount]);
+    fetch("/api/cart/count")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d && typeof d.count === "number") setCount(d.count);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     function onCartChange(e: Event) {
