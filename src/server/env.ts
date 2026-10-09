@@ -13,14 +13,23 @@ const bool = z
   .default("false")
   .transform((v) => v === "true");
 
-const optionalString = z
-  .string()
-  .optional()
-  .transform((v) => (v && v.trim() !== "" ? v : undefined));
+function cleanString(val: unknown): string | undefined {
+  if (typeof val !== "string") return undefined;
+  let v = val.trim();
+  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+    v = v.slice(1, -1).trim();
+  }
+  return v !== "" ? v : undefined;
+}
 
-function hasAppSchema(url: string): boolean {
+const cleanStringSchema = z.preprocess((v) => cleanString(v) ?? "", z.string());
+
+const optionalCleanString = z.preprocess((v) => cleanString(v), z.string().optional());
+
+function hasAppSchema(raw: unknown): boolean {
   try {
-    return new URL(url).searchParams.get("schema") === "app";
+    const cleaned = cleanString(raw) ?? "";
+    return new URL(cleaned).searchParams.get("schema") === "app";
   } catch {
     return false;
   }
@@ -29,40 +38,38 @@ function hasAppSchema(url: string): boolean {
 const serverSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-    APP_URL: z.string().url().transform((v) => v.replace(/\/+$/, "")),
+    APP_URL: cleanStringSchema.pipe(z.string().url()).transform((v) => v.replace(/\/+$/, "")),
     DEPLOY_TARGET: z.enum(["vercel", "vps"]).default("vercel"),
-    CRON_SECRET: z.string().min(32, "CRON_SECRET minimal 32 karakter"),
+    CRON_SECRET: cleanStringSchema.pipe(z.string().min(32, "CRON_SECRET minimal 32 karakter")),
     // Kunci HMAC untuk link akses pesanan guest (FR-028). Ganti = semua link lama tidak berlaku.
-    APP_SECRET: z.string().min(32, "APP_SECRET minimal 32 karakter"),
-    STORE_TIMEZONE: z.string().default("Asia/Makassar"),
+    APP_SECRET: cleanStringSchema.pipe(z.string().min(32, "APP_SECRET minimal 32 karakter")),
+    STORE_TIMEZONE: cleanStringSchema.default("Asia/Makassar"),
 
-    SUPABASE_URL: z.string().url(),
-    SUPABASE_SECRET_KEY: optionalString,
-    SUPABASE_SERVICE_ROLE_KEY: optionalString,
-    SUPABASE_JWT_SECRET: optionalString,
+    SUPABASE_URL: cleanStringSchema.pipe(z.string().url()),
+    SUPABASE_SECRET_KEY: optionalCleanString,
+    SUPABASE_SERVICE_ROLE_KEY: optionalCleanString,
+    SUPABASE_JWT_SECRET: optionalCleanString,
 
     // WAJIB memuat ?schema=app — tanpa itu Prisma menulis ke schema public yang diekspos Data API.
-    POSTGRES_PRISMA_URL: z.string().min(1).refine(hasAppSchema, "harus memuat parameter ?schema=app"),
-    POSTGRES_URL_NON_POOLING: z
-      .string()
-      .min(1)
+    POSTGRES_PRISMA_URL: cleanStringSchema.pipe(z.string().min(1)).refine(hasAppSchema, "harus memuat parameter ?schema=app"),
+    POSTGRES_URL_NON_POOLING: cleanStringSchema
+      .pipe(z.string().min(1))
       .refine(hasAppSchema, "harus memuat parameter ?schema=app"),
 
-    PAKASIR_BASE_URL: z.string().url().default("https://app.pakasir.com/api/v2"),
-    PAKASIR_PROJECT_SLUG: optionalString,
-    PAKASIR_API_KEY: optionalString,
-    PAKASIR_WEBHOOK_SECRET: optionalString,
+    PAKASIR_BASE_URL: cleanStringSchema.pipe(z.string().url()).default("https://app.pakasir.com/api/v2"),
+    PAKASIR_PROJECT_SLUG: optionalCleanString,
+    PAKASIR_API_KEY: optionalCleanString,
+    PAKASIR_WEBHOOK_SECRET: optionalCleanString,
     PAKASIR_IS_SANDBOX: bool,
 
-    RAJAONGKIR_COST_BASE_URL: z.string().url().default("https://rajaongkir.komerce.id/api/v1"),
-    RAJAONGKIR_COST_API_KEY: optionalString,
+    RAJAONGKIR_COST_BASE_URL: cleanStringSchema.pipe(z.string().url()).default("https://rajaongkir.komerce.id/api/v1"),
+    RAJAONGKIR_COST_API_KEY: optionalCleanString,
 
     KOMERCE_DELIVERY_ENABLED: bool,
-    KOMERCE_DELIVERY_BASE_URL: z
-      .string()
-      .url()
+    KOMERCE_DELIVERY_BASE_URL: cleanStringSchema
+      .pipe(z.string().url())
       .default("https://api-sandbox.collaborator.komerce.id"),
-    KOMERCE_DELIVERY_API_KEY: optionalString,
+    KOMERCE_DELIVERY_API_KEY: optionalCleanString,
   })
   .superRefine((env, ctx) => {
     if (!env.SUPABASE_SECRET_KEY && !env.SUPABASE_SERVICE_ROLE_KEY) {

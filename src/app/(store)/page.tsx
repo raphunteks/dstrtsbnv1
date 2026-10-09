@@ -9,10 +9,30 @@ export const dynamic = "force-dynamic";
 
 /** SCR-001 Beranda. Tanpa angka penjualan/rating/testimoni karangan. */
 export default async function HomePage() {
-  const [categories, latest] = await Promise.all([
-    listActiveCategories(db),
-    listProducts(db, listingParamsSchema.parse({ urut: "terbaru" })),
-  ]);
+  let categories: Awaited<ReturnType<typeof listActiveCategories>> = [];
+  let latest: Awaited<ReturnType<typeof listProducts>> = {
+    items: [],
+    total: 0,
+    page: 1,
+    pageCount: 1,
+  };
+
+  try {
+    const [cats, prod] = await Promise.all([
+      listActiveCategories(db).catch(() => []),
+      listProducts(db, listingParamsSchema.parse({ urut: "terbaru" })).catch(() => ({
+        items: [],
+        total: 0,
+        page: 1,
+        pageCount: 1,
+      })),
+    ]);
+    categories = cats;
+    latest = prod;
+  } catch (err) {
+    console.error("[home:pageError]", err);
+  }
+
   const topCategories = categories.filter((c) => c.parentId === null);
   const products = latest.items.slice(0, 8);
 

@@ -9,11 +9,23 @@ import { getCurrentCartCount } from "@/server/modules/cart/current";
 export const dynamic = "force-dynamic";
 
 export default async function StoreLayout({ children }: { children: ReactNode }) {
-  const [cartCount, categories, settings] = await Promise.all([
-    getCurrentCartCount(),
-    listActiveCategories(db),
-    db.storeSettings.findUnique({ where: { id: 1 }, select: { supportEmail: true, supportWhatsapp: true } }),
-  ]);
+  let cartCount = 0;
+  let categories: Awaited<ReturnType<typeof listActiveCategories>> = [];
+  let settings: { supportEmail: string | null; supportWhatsapp: string | null } | null = null;
+
+  try {
+    const [cCount, cats, st] = await Promise.all([
+      getCurrentCartCount().catch(() => 0),
+      listActiveCategories(db).catch(() => []),
+      db.storeSettings.findUnique({ where: { id: 1 }, select: { supportEmail: true, supportWhatsapp: true } }).catch(() => null),
+    ]);
+    cartCount = cCount;
+    categories = cats;
+    settings = st;
+  } catch (err) {
+    console.error("[store:layoutError]", err);
+  }
+
   const topCategories = categories.filter((c) => c.parentId === null);
 
   return (
