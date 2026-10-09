@@ -10,7 +10,19 @@ import { db } from "@/server/db/client";
 import { getPublishedProductBySlug } from "@/server/modules/catalog/queries";
 import { sizeChartSchema } from "@/server/modules/catalog/schemas";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  try {
+    const products = await db.product.findMany({
+      where: { status: "published" },
+      select: { slug: true },
+    });
+    return products.map((p) => ({ slug: p.slug }));
+  } catch {
+    return [];
+  }
+}
 
 type Props = { params: Promise<{ slug: string }> };
 

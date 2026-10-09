@@ -5,7 +5,7 @@ import { db } from "@/server/db/client";
 import { listActiveCategories, listProducts } from "@/server/modules/catalog/queries";
 import { listingParamsSchema } from "@/server/modules/catalog/schemas";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 /** SCR-001 Beranda. Tanpa angka penjualan/rating/testimoni karangan. */
 export default async function HomePage() {
