@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import type { FulfillmentMode } from "@prisma/client";
 import { addToCartAction, type AddToCartState } from "@/app/(store)/actions";
 import { AlertIcon, CheckIcon, ClockIcon, TruckIcon } from "@/components/ui/icons";
@@ -35,6 +35,12 @@ export function VariantPicker({ variants }: { variants: PickerVariant[] }) {
   const [selected, setSelected] = useState<Record<string, string>>(keys.length === 0 ? {} : initial);
   const [quantity, setQuantity] = useState(1);
   const [state, formAction, pending] = useActionState<AddToCartState, FormData>(addToCartAction, null);
+
+  useEffect(() => {
+    if (state?.ok) {
+      window.dispatchEvent(new CustomEvent("cart:changed", { detail: { delta: quantity } }));
+    }
+  }, [state, quantity]);
 
   const variant =
     variants.length === 1
@@ -165,9 +171,19 @@ export function VariantPicker({ variants }: { variants: PickerVariant[] }) {
         <button
           type="submit"
           disabled={!variant?.purchasable || pending}
-          className="min-h-[var(--touch-target)] flex-1 rounded-pill bg-accent px-6 text-button font-semibold text-ink-inverse shadow-low hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-paper-3 disabled:text-muted disabled:shadow-none"
+          className="min-h-[var(--touch-target)] flex-1 rounded-pill bg-accent px-6 text-button font-semibold text-ink-inverse shadow-low hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-paper-3 disabled:text-muted disabled:shadow-none transition-all active:scale-[0.98]"
         >
-          {pending ? "Menambahkan…" : "Tambah ke keranjang"}
+          {pending ? (
+            <span className="inline-flex items-center justify-center gap-2">
+              <svg className="size-4 animate-spin text-ink-inverse" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              <span>Menambahkan…</span>
+            </span>
+          ) : (
+            "Tambah ke keranjang"
+          )}
         </button>
       </div>
 
@@ -177,7 +193,7 @@ export function VariantPicker({ variants }: { variants: PickerVariant[] }) {
             {state.ok ? <CheckIcon className="size-4" /> : <AlertIcon className="size-4" />}
             {state.message}
             {state.ok ? (
-              <Link href="/keranjang" className="ml-1 text-accent underline">Lihat keranjang</Link>
+              <Link href="/keranjang" prefetch={true} className="ml-1 text-accent underline">Lihat keranjang →</Link>
             ) : null}
           </p>
         ) : null}

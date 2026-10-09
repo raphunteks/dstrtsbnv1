@@ -17,11 +17,23 @@ export type FeatureFlags = z.infer<typeof featureFlagsSchema>;
 
 export const defaultFeatureFlags: FeatureFlags = featureFlagsSchema.parse({});
 
-export async function getFeatureFlags(db: Db): Promise<FeatureFlags> {
+let cachedFlags: { data: FeatureFlags; expiresAt: number } | null = null;
+
+export async function getFeatureFlags(db: Db, bypassCache = false): Promise<FeatureFlags> {
+  const now = Date.now();
+  if (!bypassCache && cachedFlags && cachedFlags.expiresAt > now) {
+    return cachedFlags.data;
+  }
   const settings = await db.storeSettings.findUnique({
     where: { id: 1 },
     select: { featureFlags: true },
   });
   const parsed = featureFlagsSchema.safeParse(settings?.featureFlags ?? {});
-  return parsed.success ? parsed.data : defaultFeatureFlags;
+  const data = parsed.success ? parsed.data : defaultFeatureFlags;
+  cachedFlags = { data, expiresAt: now + 60_000 }; // 60s cache
+  return data;
+}
+
+export function invalidateFeatureFlagsCache() {
+  cachedFlags = null;
 }

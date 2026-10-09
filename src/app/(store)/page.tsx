@@ -46,6 +46,7 @@ export default async function HomePage() {
           </p>
           <Link
             href="/cari"
+            prefetch={true}
             className="mt-8 inline-flex min-h-[var(--touch-target)] items-center rounded-pill bg-accent px-6 text-button font-semibold text-ink-inverse shadow-low hover:bg-accent-hover"
           >
             Lihat katalog
@@ -61,6 +62,7 @@ export default async function HomePage() {
               <li key={c.id}>
                 <Link
                   href={`/kategori/${c.slug}`}
+                  prefetch={true}
                   className="inline-flex min-h-[var(--touch-target)] items-center rounded-pill border border-rule-strong bg-surface px-5 text-small font-semibold text-ink hover:border-accent hover:text-accent"
                 >
                   {c.name}

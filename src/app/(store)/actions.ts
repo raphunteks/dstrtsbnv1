@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { db } from "@/server/db/client";
@@ -33,6 +34,7 @@ export async function addToCartAction(_prev: AddToCartState, formData: FormData)
       });
     }
     await setCartItemQuantity(db, { cartId: cart.id, variantId: parsed.data.variantId, quantity: parsed.data.quantity, mode: "add" });
+    revalidatePath("/keranjang");
     return { ok: true, message: "Ditambahkan ke keranjang." };
   } catch (error) {
     if (isDomainError(error)) return { ok: false, message: error.message };

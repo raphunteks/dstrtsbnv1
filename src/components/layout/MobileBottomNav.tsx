@@ -28,6 +28,7 @@ export function MobileBottomNav({ cartCount }: { cartCount: number }) {
             <li key={href}>
               <Link
                 href={href}
+                prefetch={true}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "relative flex min-h-14 flex-col items-center justify-center gap-0.5 text-caption font-medium",

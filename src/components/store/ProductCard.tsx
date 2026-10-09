@@ -23,7 +23,11 @@ export function ProductCard({ product, priority = false }: { product: ProductCar
       />
       <div className="mt-3 flex flex-1 flex-col gap-1">
         <h3 className="text-body font-semibold text-ink">
-          <Link href={`/produk/${product.slug}`} className="after:absolute after:inset-0 group-hover:underline">
+          <Link
+            href={`/produk/${product.slug}`}
+            prefetch={true}
+            className="after:absolute after:inset-0 group-hover:underline"
+          >
             {product.name}
           </Link>
         </h3>

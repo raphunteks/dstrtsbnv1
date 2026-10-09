@@ -51,9 +51,9 @@ export default async function ProductPage({ params }: Props) {
     <div className="mx-auto max-w-[var(--layout-max)] px-4 py-6 md:px-6 md:py-10">
       <nav aria-label="Breadcrumb" className="text-small text-muted">
         <ol className="flex flex-wrap gap-2">
-          <li><Link href="/" className="hover:text-ink">Beranda</Link></li>
+          <li><Link href="/" prefetch={true} className="hover:text-ink">Beranda</Link></li>
           <li aria-hidden="true">/</li>
-          <li><Link href={`/kategori/${product.category.slug}`} className="hover:text-ink">{product.category.name}</Link></li>
+          <li><Link href={`/kategori/${product.category.slug}`} prefetch={true} className="hover:text-ink">{product.category.name}</Link></li>
           <li aria-hidden="true">/</li>
           <li aria-current="page" className="text-ink">{product.name}</li>
         </ol>

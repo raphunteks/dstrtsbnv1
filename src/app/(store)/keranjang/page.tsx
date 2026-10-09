@@ -113,6 +113,7 @@ export default async function CartPage() {
               {group.checkoutReady ? (
                 <Link
                   href={`/checkout?g=${encodeURIComponent(group.key)}`}
+                  prefetch={true}
                   className="inline-flex min-h-[var(--touch-target)] items-center justify-center rounded-pill bg-accent px-6 text-button font-semibold text-ink-inverse shadow-low hover:bg-accent-hover"
                 >
                   {view.needsSplit ? `Checkout kelompok ${gi + 1}` : "Lanjut ke checkout"}

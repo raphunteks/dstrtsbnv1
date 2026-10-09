@@ -100,8 +100,28 @@ export type ProductCard = {
   sizes: string[];
 };
 
+let cachedLatest: {
+  data: { items: ProductCard[]; total: number; page: number; pageCount: number };
+  expiresAt: number;
+} | null = null;
+
 /** Listing katalog / hasil pencarian (FR-002–FR-005). Hanya produk published. */
 export async function listProducts(db: Db, params: ListingParams, now = new Date()) {
+  const isDefaultListing =
+    !params.q &&
+    !params.kategori &&
+    !params.ukuran &&
+    !params.tersedia &&
+    params.min == null &&
+    params.max == null &&
+    params.hal === 1 &&
+    params.urut === "terbaru";
+
+  const currentTime = Date.now();
+  if (isDefaultListing && cachedLatest && cachedLatest.expiresAt > currentTime) {
+    return cachedLatest.data;
+  }
+
   const flags = await getFeatureFlags(db);
 
   const where: Prisma.ProductWhereInput = {
@@ -191,12 +211,18 @@ export async function listProducts(db: Db, params: ListingParams, now = new Date
     };
   });
 
-  return {
+  const result = {
     items,
     total,
     page: params.hal,
     pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)),
   };
+
+  if (isDefaultListing) {
+    cachedLatest = { data: result, expiresAt: currentTime + 30_000 };
+  }
+
+  return result;
 }
 
 export type ProductDetailVariant = {
@@ -211,11 +237,7 @@ export type ProductDetailVariant = {
   originLabel: string;
 };
 
-/**
- * Detail produk (FR-006–FR-010). Mengembalikan null untuk produk yang tidak published —
- * termasuk lewat URL lama — sehingga halaman menampilkan 404 (FR-005).
- */
-export async function getPublishedProductBySlug(db: Db, slug: string, now = new Date()) {
+async function fetchPublishedProductBySlug(db: Db, slug: string, now: Date) {
   const flags = await getFeatureFlags(db);
   const product = await db.product.findFirst({
     where: { slug, status: "published", category: { status: "active" } },
@@ -268,10 +290,53 @@ export async function getPublishedProductBySlug(db: Db, slug: string, now = new 
   return { ...product, variants };
 }
 
-export async function listActiveCategories(db: Db) {
-  return db.category.findMany({
+export type PublishedProduct = Awaited<ReturnType<typeof fetchPublishedProductBySlug>>;
+
+const productCache = new Map<string, { data: PublishedProduct; expiresAt: number }>();
+
+/**
+ * Detail produk (FR-006–FR-010). Mengembalikan null untuk produk yang tidak published —
+ * termasuk lewat URL lama — sehingga halaman menampilkan 404 (FR-005).
+ */
+export async function getPublishedProductBySlug(
+  db: Db,
+  slug: string,
+  now = new Date(),
+  bypassCache = false,
+): Promise<PublishedProduct> {
+  const currentTime = Date.now();
+  const cached = productCache.get(slug);
+  if (!bypassCache && cached && cached.expiresAt > currentTime) {
+    return cached.data;
+  }
+
+  const result = await fetchPublishedProductBySlug(db, slug, now);
+  productCache.set(slug, { data: result, expiresAt: currentTime + (result ? 30_000 : 10_000) });
+  return result;
+}
+
+export function invalidateProductCache(slug?: string) {
+  if (slug) productCache.delete(slug);
+  else productCache.clear();
+}
+
+type ActiveCategory = { id: string; name: string; slug: string; parentId: string | null };
+let cachedCategories: { data: ActiveCategory[]; expiresAt: number } | null = null;
+
+export async function listActiveCategories(db: Db, bypassCache = false): Promise<ActiveCategory[]> {
+  const currentTime = Date.now();
+  if (!bypassCache && cachedCategories && cachedCategories.expiresAt > currentTime) {
+    return cachedCategories.data;
+  }
+  const data = await db.category.findMany({
     where: { status: "active" },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     select: { id: true, name: true, slug: true, parentId: true },
   });
+  cachedCategories = { data, expiresAt: currentTime + 60_000 };
+  return data;
+}
+
+export function invalidateCategoriesCache() {
+  cachedCategories = null;
 }

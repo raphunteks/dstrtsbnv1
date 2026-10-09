@@ -8,6 +8,23 @@ import { getCurrentCartCount } from "@/server/modules/cart/current";
 
 export const dynamic = "force-dynamic";
 
+let cachedSettings: {
+  data: { supportEmail: string | null; supportWhatsapp: string | null } | null;
+  expiresAt: number;
+} | null = null;
+
+async function getStoreSettingsContact() {
+  const now = Date.now();
+  if (cachedSettings && cachedSettings.expiresAt > now) {
+    return cachedSettings.data;
+  }
+  const data = await db.storeSettings
+    .findUnique({ where: { id: 1 }, select: { supportEmail: true, supportWhatsapp: true } })
+    .catch(() => null);
+  cachedSettings = { data, expiresAt: now + 60_000 };
+  return data;
+}
+
 export default async function StoreLayout({ children }: { children: ReactNode }) {
   let cartCount = 0;
   let categories: Awaited<ReturnType<typeof listActiveCategories>> = [];
@@ -17,7 +34,7 @@ export default async function StoreLayout({ children }: { children: ReactNode })
     const [cCount, cats, st] = await Promise.all([
       getCurrentCartCount().catch(() => 0),
       listActiveCategories(db).catch(() => []),
-      db.storeSettings.findUnique({ where: { id: 1 }, select: { supportEmail: true, supportWhatsapp: true } }).catch(() => null),
+      getStoreSettingsContact(),
     ]);
     cartCount = cCount;
     categories = cats;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BrandLockup } from "@/components/brand/BrandLockup";
-import { BagIcon, SearchIcon, UserIcon } from "@/components/ui/icons";
+import { SearchIcon, UserIcon } from "@/components/ui/icons";
+import { CartBadge } from "./CartBadge";
 
 type HeaderProps = {
   cartCount: number;
@@ -33,34 +34,19 @@ export function Header({ cartCount, categories }: HeaderProps) {
         <nav aria-label="Akun dan keranjang" className="ml-auto flex items-center gap-1">
           <Link
             href="/cari"
+            prefetch={true}
             className="inline-flex size-[var(--touch-target)] items-center justify-center rounded-pill text-ink hover:bg-paper-2 md:hidden"
           >
             <SearchIcon title="Cari" />
           </Link>
           <Link
             href="/akun"
+            prefetch={true}
             className="hidden size-[var(--touch-target)] items-center justify-center rounded-pill text-ink hover:bg-paper-2 md:inline-flex"
           >
             <UserIcon title="Akun" />
           </Link>
-          <Link
-            href="/keranjang"
-            className="relative inline-flex min-h-[var(--touch-target)] items-center gap-2 rounded-pill px-3 text-ink hover:bg-paper-2"
-          >
-            <BagIcon />
-            <span className="text-small font-semibold">
-              Keranjang
-              <span className="sr-only">, {cartCount} barang</span>
-            </span>
-            {cartCount > 0 ? (
-              <span
-                aria-hidden="true"
-                className="min-w-6 rounded-pill bg-accent px-1.5 text-center text-caption font-bold text-ink-inverse"
-              >
-                {cartCount > 99 ? "99+" : cartCount}
-              </span>
-            ) : null}
-          </Link>
+          <CartBadge initialCount={cartCount} />
         </nav>
       </div>
 
@@ -71,6 +57,7 @@ export function Header({ cartCount, categories }: HeaderProps) {
               <li key={c.slug}>
                 <Link
                   href={`/kategori/${c.slug}`}
+                  prefetch={true}
                   className="inline-flex min-h-[var(--touch-target)] items-center px-3 text-small font-medium text-muted hover:text-ink"
                 >
                   {c.name}
