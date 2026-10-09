@@ -25,6 +25,11 @@ export const publicEnv = {
     process.env.SUPABASE_PUBLISHABLE_KEY ||
     process.env.SUPABASE_ANON_KEY
   ),
+  appUrl: clean(
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.APP_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "")
+  ) || "https://dastertasbon.vercel.app",
 } as const;
 
 export function assertPublicEnv() {

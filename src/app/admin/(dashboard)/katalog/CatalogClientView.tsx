@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { formatRupiah } from "@/lib/money";
-import { toggleProductStatusAction } from "../actions";
+import { toggleProductStatusAction } from "@/app/admin/actions";
 
 type ProductVariant = {
   id: string;

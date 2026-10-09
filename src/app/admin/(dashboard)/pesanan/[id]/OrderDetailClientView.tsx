@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { formatRupiah } from "@/lib/money";
-import { updateOrderFulfillmentAction, shipOrderManualAction } from "../../actions";
+import { updateOrderFulfillmentAction, shipOrderManualAction } from "@/app/admin/actions";
 
 type OrderDetailItem = {
   id: string;

@@ -2,7 +2,7 @@
 
 import { useTransition, useState } from "react";
 import { formatRupiah } from "@/lib/money";
-import { approveRefundAction } from "../actions";
+import { approveRefundAction } from "@/app/admin/actions";
 
 type PaymentRow = {
   id: string;

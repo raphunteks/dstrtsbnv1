@@ -5,6 +5,8 @@ import { cache } from "react";
 import { ProductImage } from "@/components/store/ProductImage";
 import { VariantPicker, type PickerVariant } from "@/components/store/VariantPicker";
 import { RulerIcon, TruckIcon } from "@/components/ui/icons";
+import { ProductJsonLd, BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { getSiteUrl } from "@/lib/site";
 import { productImageUrl } from "@/lib/media";
 import { db } from "@/server/db/client";
 import { getPublishedProductBySlug } from "@/server/modules/catalog/queries";
@@ -59,8 +61,31 @@ export default async function ProductPage({ params }: Props) {
     originLabel: v.originLabel,
   }));
 
+  const minPrice = variants.reduce((acc, v) => Math.min(acc, v.priceIdr), variants[0]?.priceIdr ?? 0);
+  const inStock = variants.some((v) => v.available > 0);
+  const baseUrl = getSiteUrl();
+
   return (
     <div className="mx-auto max-w-[var(--layout-max)] px-4 py-6 md:px-6 md:py-10">
+      <ProductJsonLd
+        product={{
+          name: product.name,
+          description: product.seoDescription || product.description,
+          slug: product.slug,
+          mediaUrl: cover ? productImageUrl(cover.objectKey) : null,
+          sku: product.variants[0]?.sku ?? product.slug,
+          minPriceIdr: minPrice,
+          inStock,
+          categoryName: product.category.name,
+        }}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Beranda", url: baseUrl },
+          { name: product.category.name, url: `${baseUrl}/kategori/${product.category.slug}` },
+          { name: product.name, url: `${baseUrl}/produk/${product.slug}` },
+        ]}
+      />
       <nav aria-label="Breadcrumb" className="text-small text-muted">
         <ol className="flex flex-wrap gap-2">
           <li><Link href="/" prefetch={true} className="hover:text-ink">Beranda</Link></li>

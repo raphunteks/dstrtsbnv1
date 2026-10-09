@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Catalog } from "@/components/store/Catalog";
+import { BreadcrumbJsonLd } from "@/components/seo/JsonLd";
+import { getSiteUrl } from "@/lib/site";
 import { db } from "@/server/db/client";
 import { listProducts } from "@/server/modules/catalog/queries";
 import { parseListing, STORE_SIZES, type SearchParams } from "../../listing";
@@ -30,9 +32,16 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   const listing = await parseListing(searchParams, { kategori: category.slug });
   const result = await listProducts(db, listing);
+  const baseUrl = getSiteUrl();
 
   return (
     <div className="mx-auto max-w-[var(--layout-max)] px-4 py-6 md:px-6 md:py-10">
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Beranda", url: baseUrl },
+          { name: category.name, url: `${baseUrl}/kategori/${category.slug}` },
+        ]}
+      />
       <nav aria-label="Breadcrumb" className="text-small text-muted">
         <ol className="flex gap-2">
           <li><Link href="/" className="hover:text-ink">Beranda</Link></li>

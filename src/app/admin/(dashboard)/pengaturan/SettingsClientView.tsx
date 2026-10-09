@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updateSettingsAction } from "../actions";
+import { updateSettingsAction } from "@/app/admin/actions";
 
 type StoreSettingsData = {
   supportEmail?: string | null;

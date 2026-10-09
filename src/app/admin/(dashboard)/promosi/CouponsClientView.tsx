@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { formatRupiah } from "@/lib/money";
-import { createCouponAction } from "../actions";
+import { createCouponAction } from "@/app/admin/actions";
 
 type CouponItem = {
   id: string;

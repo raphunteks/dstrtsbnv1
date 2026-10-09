@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { OrganizationJsonLd } from "@/components/seo/JsonLd";
 import { db } from "@/server/db/client";
 import { listActiveCategories } from "@/server/modules/catalog/queries";
 export const revalidate = 60;
@@ -42,6 +43,10 @@ export default async function StoreLayout({ children }: { children: ReactNode })
 
   return (
     <>
+      <OrganizationJsonLd
+        supportEmail={settings?.supportEmail}
+        supportWhatsapp={settings?.supportWhatsapp}
+      />
       <Header cartCount={0} categories={topCategories} />
       <main id="konten" className="pb-20 md:pb-0">
         {children}
