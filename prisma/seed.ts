@@ -90,6 +90,15 @@ async function main() {
     },
   ];
 
+  const DEMO_IMAGES: Record<string, string> = {
+    "daster-jumbo-santai":
+      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=900&q=80",
+    "daster-rayon-harian":
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80",
+    "tunik-santai-rayon":
+      "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?auto=format&fit=crop&w=900&q=80",
+  };
+
   for (const p of products) {
     const product = await db.product.upsert({
       where: { slug: p.slug },
@@ -107,7 +116,7 @@ async function main() {
         minPriceIdr: Math.min(...p.variants.map((v) => v.price)),
         maxPriceIdr: Math.max(...p.variants.map((v) => v.price)),
         media: {
-          create: [{ objectKey: `contoh/${p.slug}.jpg`, altText: `${p.name}, foto contoh`, sortOrder: 0 }],
+          create: [{ objectKey: DEMO_IMAGES[p.slug] ?? `contoh/${p.slug}.jpg`, altText: `${p.name}, foto contoh`, sortOrder: 0 }],
         },
       },
     });
